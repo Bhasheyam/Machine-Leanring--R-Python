@@ -73,16 +73,21 @@ iris=iris[ordered(gp),]
 index1=sample(2, nrow(iris), replace = TRUE, prob = c(0.67, 0.33))
 trainingset=iris[index1==1,1:4]
 testset=iris[index1==2,1:4]
-traininglabel=iris[index1==1,5]
+traininglabel=iris$Species[index1==1]
 testlabel=iris[index1==2,5]
+testlabel
 ```
 
 
 Above is the creation of Training and Testing Set.
 ```{r}
 library(class)
-model=knn(train=trainingset,test = testset, cl=traininglabel,k=3)
+model=knn(train=trainingset,test = testset, cl=traininglabel,k=1)
 summary(model)
 table(testlabel,model)
 ```
+
+Thumb Rule : Sqrt of the Nrow will have idle k. to start with .
+
+
 

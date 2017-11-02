@@ -1,0 +1,88 @@
+---
+title: "Machine Leanrning"
+author: "Bhasheyam"
+date: "1 November 2017"
+output: html_document
+---
+```{r}
+
+iris
+
+```
+
+Before try to fit a model it is better to study the dataset to find a better fit.
+
+```{r}
+cor(subset(iris,select=-Species))
+```
+
+From the above
+petal width and petal length
+Septal.length and petal.length, petal width are well corelated 
+
+```{r}
+library(ggvis)
+iris %>% ggvis(~Sepal.Length,~Petal.Length, fill = ~Species) %>% layer_points()
+```
+```{r}
+library(ggvis)
+iris %>% ggvis(~Petal.Width, ~Petal.Length, fill = ~Species) %>% layer_points()
+```
+```{r}
+library(ggvis)
+iris %>% ggvis(~Sepal.Length,~Petal.Width , fill = ~Species) %>% layer_points()
+```
+
+From the above we can see a positive correlation between these combinations as we can observe from the Graph.
+
+
+```{r}
+lev=levels(iris$Species)
+cor(iris[iris$Species==lev[1],1:4])
+```
+```{r}
+lev=levels(iris$Species)
+cor(iris[iris$Species==lev[2],1:4])
+```
+```{r}
+lev=levels(iris$Species)
+cor(iris[iris$Species==lev[3],1:4])
+```
+```{r}
+summary(iris)
+```
+```{r}
+calculatenorm=function(x){
+  num=x-min(x)
+  denom=max(x)-min(x)
+  return (num/denom)
+}
+normalizeset= as.data.frame(lapply(iris[1:4],calculatenorm))
+normalizeset
+```
+
+After the Datasetis normalised 
+```{r}
+normdata=cbind.data.frame(normalizeset,iris$Species)
+normdata
+```
+```{r}
+set.seed(1234)
+gp=runif(150)
+iris=iris[ordered(gp),]
+index1=sample(2, nrow(iris), replace = TRUE, prob = c(0.67, 0.33))
+trainingset=iris[index1==1,1:4]
+testset=iris[index1==2,1:4]
+traininglabel=iris[index1==1,5]
+testlabel=iris[index1==2,5]
+```
+
+
+Above is the creation of Training and Testing Set.
+```{r}
+library(class)
+model=knn(train=trainingset,test = testset, cl=traininglabel,k=3)
+summary(model)
+table(testlabel,model)
+```
+

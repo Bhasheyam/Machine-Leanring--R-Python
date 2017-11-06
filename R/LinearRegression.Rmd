@@ -1,0 +1,25 @@
+---
+title: "Linear Regression"
+output: html_notebook
+---
+```{r}
+library(ISLR)
+Auto
+```
+
+```{r}
+tempauto = subset(Auto, select = -name)
+model = lm(Auto$mpg ~ ., data =  tempauto)
+summary(model)
+```
+
+```{r}
+stepmodel = step(model)
+summary(stepmodel)
+```
+```{r}
+predicted = predict(stepmodel, tempauto)
+mse  =  mean((Auto$mpg - predicted)^2)
+mse
+```
+

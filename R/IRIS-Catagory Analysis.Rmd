@@ -66,6 +66,17 @@ After the Datasetis normalised
 normdata=cbind.data.frame(normalizeset,iris$Species)
 normdata
 ```
+
+
+
+
+Anslysis of KNN Method for the IRIS dataset
+
+
+
+
+
+
 ```{r}
 set.seed(1234)
 gp=runif(150)
@@ -90,4 +101,11 @@ table(testlabel,model)
 Thumb Rule : Sqrt of the Nrow will have idle k. to start with .
 
 
+
+Analysis of the Dataset using Logical Regression
+
+
+```{r}
+
+```
 

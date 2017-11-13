@@ -1,0 +1,445 @@
+---
+title: "Linear Regression"
+author: "Bhasheyam"
+date: "4 September 2017"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+AId: Bhasheyam Krishnan - A20380078
+     Hemanth Balakrishna- A2
+```{r}
+preload=function(){
+  library(ISLR)
+  print("loading Library")
+}
+```
+
+8 a) 
+```{r}
+preload()
+data(Auto)
+stats.lm=lm(mpg ~ horsepower, data=Auto)
+summary(stats.lm)
+```
+
+i) Yes there is an relation between the predictor and Response
+
+ii) Here P-value is 2.2*10^-16 which is 0.00000000000000022.so P value is almost equal to zero. p-value less than 0.05 are strong relationship. 
+
+iii) co-efficent is negative, so the relation is negative. say we have x and y then increase in one cause decrease in another various.
+
+iv)
+```{r}
+addit=data.frame(horsepower=98)
+predict(stats.lm, addit)
+
+```
+
+```{r}
+predict(stats.lm, addit, interval="confidence")
+
+```
+
+```{r}
+predict(stats.lm, addit, interval="prediction")
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+8) 
+b)
+
+```{r}
+plot(Auto$horsepower,Auto$mpg, main="Least Regression Line", xlab="Horsepower",ylab="MGP", type="p",col="red")
+abline(stats.lm,col="blue")
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+8)
+C)
+
+```{r}
+par(mfrow=c(2,2))
+plot(stats.lm,col="blue")
+```
+
+From the Residuals VS Fitted Graph it is observed that the relationship is non-linear as some of the values are negative and some positive in the plot.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+9)
+a)
+
+```{r}
+pairs(Auto, col="blue")
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+9)
+b)
+
+```{r}
+cor(subset(Auto,select=-name))
+
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+
+9)
+c)
+
+```{r}
+stats1.lm=lm(formula = mpg~ . -name, data = Auto)
+summary(stats1.lm)
+```
+
+i) Yes there exsist an relationship between Response and Predictor as the Residuals mean is almost zero.
+
+ii) displacement, acceleration, year, origin have a statistically signiﬁcant relationship to the response
+
+iii) the year coefficient 0.75 show the later year model cars have higher MPG than the oold model cars.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+9)
+d)
+
+```{r}
+par(frow=c(2,2))
+plot(stats1.lm, col="blue")
+```
+ From the Residuals Vs Fitted Graph non-linearity  is observed.
+ 14 is the highest leverage observed from Residuals vs Leverage Graph.
+ 
+ -------------------------------------------------------------------------------------------------------------------------
+ 
+
+ 9)
+ e)
+ 
+ trying four different combination for three interactions 
+ 
+ 1)
+```{r}
+stats.lm0 <- lm(mpg~displacement+weight+year+origin, data=Auto)
+summary(stats.lm0)
+```
+
+2)
+```{r}
+stats.lm1 <- lm(mpg~displacement+weight+year*origin, data=Auto)
+summary(stats.lm1)
+```
+
+3)
+```{r}
+stats.lm2 <- lm(mpg~displacement+origin+year*weight, data=Auto)
+summary(stats.lm2)
+```
+
+
+4)
+```{r}
+stats.lm3 <- lm(mpg~year+origin+displacement*weight, data=Auto)
+summary(stats.lm3)
+```
+All the Interactions are appear to be statistically signiﬁcant
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+9)
+f)
+
+1)
+
+```{r}
+stats.lm4 <- lm(mpg~poly(displacement,3)+weight+year+origin, data=Auto)
+summary(stats.lm4)
+
+```
+
+
+2)
+```{r}
+stats.lm5 <- lm(mpg~displacement+I(log(weight))+year+origin, data=Auto)
+summary(stats.lm5)
+
+```
+
+
+3)
+```{r}
+stats.lm6 <- lm(mpg~displacement+I(weight^2)+year+origin, data=Auto)
+summary(stats.lm6)
+
+```
+
+Displacement power of 2 has high effect than other polynomials of displacement
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+10)
+a)
+
+```{r}
+preload()
+data("Carseats")
+stats3.lm=lm(Sales~Price + Urban + US, data=Carseats)
+summary(stats3.lm)
+```
+
+10)
+b)
+sales-> represented in 1000's for every location Price-> price are charged for car seat for every location Urban -> Yes/No, US-> Yes/NO
+
+1) price: -0.054459 -> there is a drop of 54 in sales when there is dollar increse in price.(Statistically Significant)
+
+2)UrbanYes: -0.021916 -> sales are low for Urban location by 22.(Non Significant)
+
+3)USYes: 1.200573 -> Us location sales are 1201 higher.(Statistically Significant).
+
+
+--------------------------------------------------------------------------------------------------------------------------
+10)
+c)
+
+formula:
+
+Sale = 13.043 - 0.054 x Price - 0.022 x UrbanYes + 1.201 x USYes
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+10)
+d)
+
+price(2X10^-16) -> which is less than 0.05
+UsYes(4.86X10^-6) -> which is less than 0.05
+so we can eliminate for Price and UsYes.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+10)
+e)
+
+```{r}
+stats3.lm1=lm(Sales~Price+US,data=Carseats )
+summary(stats3.lm)
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+10)
+f)
+
+1st Observation 
+sales-(Price, Urban, US):
+RSE = 2.472
+r^2 = 0.2393
+
+2nd Observation
+sales-(Price, US):
+RSE = 2.469
+r^2 = 0.2393
+
+for the second observation stats are better as it has a low RSE and one pridictor Less.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+10)
+g)
+
+```{r}
+confint(stats3.lm1)
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+10)
+h)
+
+```{r}
+par(mfrow=c(2,2))
+plot(stats3.lm1, col="blue")  
+```
+
+```{r}
+par(mfrow=c(1,1))
+plot(predict(stats3.lm1), rstudent(stats3.lm1), col="blue")
+require(Car)
+```
+
+
+```{r}
+plot(hatvalues(stats3.lm1))
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+a)
+```{r}
+set.seed(1)
+x=rnorm(100)
+x
+```
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+b)
+```{r}
+eps =rnorm(100, sd=0.25^0.5)
+eps
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+c)
+
+```{r}
+y = -1 + 0.5*x + eps
+length(y)
+```
+
+
+length = 100
+
+??0=???1
+
+??1=0.5
+
+--------------------------------------------------------------------------------------------------------------------------
+
+```{r}
+plot(x,y, col="blue", xlab="X",ylab="Y")
+```
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+e)
+```{r}
+stats4.lm=lm(y~x)
+summary(stats4.lm)
+```
+
+From the above summary :
+??0^=???1.019??0^=???1.019 and  ??1^=0.499 are observed which is almost close to the actual beta calcuation.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+f)
+
+
+```{r}
+plot(x,y)
+abline(-1, 0.5, col="blue")  
+abline(stats4.lm, col="red")    
+legend(x = c(0,2.7),
+       y = c(-2.5,-2),
+       legend = c("population", "model fit"),
+       col = c("blue","red"), lwd=2 )
+```
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+g)
+
+```{r}
+stats4.lm1=lm(y~x+I(x^2))
+summary(stats4.lm1)
+```
+
+```{r}
+anova(stats4.lm, stats4.lm1)
+```
+
+No proper evidence of better fit of the p-value of coeficent for x^2.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+13)
+h)
+
+prvious  SD was 0.5 to dcrease the noise sd was decreased to 0.1
+```{r}
+eps2= rnorm(100, sd=0.1)
+y2=-1 + 0.5*x + eps2
+stats4.lm2=lm(y2~x)
+summary(stats4.lm2)
+```
+
+```{r}
+plot(x, y2)
+abline(-1, 0.5, col="blue")   
+abline(stats4.lm2, col="red")   
+legend(x = c(0,2.7),
+       y = c(-2.5,-1.5),
+       legend = c("population", "model fit"),
+       col = c("blue","red"), lwd=2 )
+```
+
+Observations:
+
+previous result were good as coeeficient values are close to beta values, reduced noise have produced similar results (-0.99726 and 05.0212) but the RSE and r^2 are improved the previous orginal
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+13)
+i)
+
+previous SD=0.5 to increase the noise the sd is increased to 1
+```{r}
+eps3=(rnorm(100,sd=1.0))
+y3= -1+0.5*x+eps3
+stats4.lm3=lm(y3~x)
+summary(stats4.lm3)
+
+```
+```{r}
+plot(x,y3)
+abline(-1,0.5,col="blue")
+abline(stats4.lm3,col="red")
+legend(x=c(0,2),y=c(-4,-3),legend = c("population", "model fit"),col = c("blue","red"), lwd=2 )
+```
+
+Observation:
+
+Increase in Noise made changes in coeffients, it is far from orginal and the RSE and r^2 values not improved and undesired values.
+
+--------------------------------------------------------------------------------------------------------------------------
+
+13)
+j)
+
+```{r}
+confint(stats4.lm)
+confint(stats4.lm2)
+confint(stats4.lm3)
+```
+
+ObservationS:
+
+The various in the noisy and noise less data is very less and two data set variation is minial with the original population.
+
+--------------------------------------------------------------------------------------------------------------------------

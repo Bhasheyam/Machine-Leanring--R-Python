@@ -1,0 +1,341 @@
+---
+title: "Clasifer battle with Auto dataset"
+author: "Bhasheyam Krishnan "
+date: "14 November 2017"
+output: pdf_document
+---
+1. Create a new column in the dataset, high_mileage that is true if mpg > mean(mpg). Else it’s
+false. You will try to predict these variables as a function of the predictors. DO NOT USE name
+and origin is a categorical as before.
+
+```{r}
+Autodata = Auto[1:7]
+Autodata$origin = as.factor(Auto$origin)
+Autodata$high_mileage = apply(Autodata, 1, function(x) x[1] > mean(Autodata$mpg))
+Autodata
+```
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+2. Set the seed to one and set up the data for 3-fold cross validation.
+```{r}
+set.seed(1)
+jumble = runif(nrow(Autodata))
+Autodata = Autodata[ordered(jumble),]
+index = sample(2, nrow(Autodata), replace = TRUE, prob = c(0.80,0.20))
+Autotrain = Autodata[index == 1,]
+Autotest = Autodata[index == 2,]
+
+
+```
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+3. Guess which classifier will do best.
+
+Answer :
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+4. Predict high mpg with these classifiers:
+
+```{r}
+library(mlr)
+traintask = makeClassifTask(data = Autotrain,target = "high_mileage")
+testtask = makeClassifTask(data = Autotest, target = "high_mileage")
+traintask
+
+```
+```{r}
+traintask = normalizeFeatures(traintask,method = "standardize")
+testtask = normalizeFeatures(testtask, method = "standardize")
+traintask <- dropFeatures(task = traintask,features = c("mpg"))
+testtask <- dropFeatures(task = testtask,features = c("mpg"))
+
+```
+
+
+
+
+
+a. Logistic regression tuning (i.e., with ridge regularization)
+```{r}
+logistic = makeLearner("classif.logreg",predict.type = "response")
+cv.logistic = crossval(learner = logistic, task = traintask,iter = 3, stratify = TRUE,measures = acc,show.info = F)
+cv.logistic$aggr
+cv.logistic$measures.test
+```
+```{r}
+logmodel = train(logistic,traintask)
+getLearnerModel(logmodel)
+```
+```{r}
+logpridect = predict(logmodel,testtask)
+
+table(Autotest$high_mileage,logpridect$data$response)
+```
+Here the Acuuracy is 93 %
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+b. Decision trees with tuning (e.g., you will set the splitting criterion)
+
+```{r}
+ tree <- makeLearner("classif.rpart", predict.type = "response")
+```
+
+```{r}
+set_cv = makeResampleDesc("CV",iters = 3L)
+
+```
+
+
+```{r}
+gs <- makeParamSet(makeIntegerParam("minsplit",lower = 10, upper = 50),
+makeIntegerParam("minbucket", lower = 5, upper = 50),
+makeNumericParam("cp", lower = 0.001, upper = 0.2))
+```
+
+```{r}
+gscontrol =  makeTuneControlGrid()
+```
+```{r}
+tune = tuneParams(learner = tree, resampling = set_cv, task = traintask, par.set = gs, control = gscontrol, measures = acc)
+```
+
+
+
+```{r}
+tune$x
+```
+The above are the best tuning varaible from the tuning
+```{r}
+tune$y
+
+```
+```{r}
+traintree = setHyperPars(tree,par.vals = tune$x)
+```
+
+Fitting the Tuning variable in the Tree
+
+```{r}
+destree = train(traintree,traintask)
+getLearnerModel(destree)
+```
+```{r}
+prp(destree$learner.model)
+```
+
+
+```{r}
+library(rattle)	
+fancyRpartPlot(destree$learner.model)	
+```
+
+
+```{r}
+despredict = predict(destree,testtask)
+table(Autotest$high_mileage,despredict$data$response)
+```
+
+Here the Accuracy is 91%
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+c. Bagging with tuning
+
+
+```{r}
+
+baglearn = makeLearner("classif.boosting", predict.type = "response")
+
+```
+```{r}
+
+```
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+d. Random forest with tuning
+
+
+```{r}
+randomforest = makeLearner("classif.randomForest",predict.type = "response", par.vals = list(ntree = 200, mtry = 3))
+randomforest$par.vals = list(importance = TRUE)
+
+```
+
+
+Creating a learner
+```{r}
+randomparam <- makeParamSet(
+makeIntegerParam("ntree",lower = 50, upper = 500),
+makeIntegerParam("mtry", lower = 3, upper = 10),
+makeIntegerParam("nodesize", lower = 10, upper = 50)
+)
+randomcontrol <- makeTuneControlRandom(maxit = 50L)
+randomcross = makeResampleDesc("CV",iter =  3L)
+```
+
+
+Finding the Tuning value
+
+```{r}
+randomtune <- tuneParams(learner = randomforest, resampling = randomcross, task = traintask, par.set = randomparam, control = randomcontrol, measures = acc)
+
+```
+
+
+
+```{r}
+randomtune$y
+```
+```{r}
+randomtune$x
+```
+The above are the best Tuning variable
+
+```{r}
+randomtree = setHyperPars(randomforest, par.vals = randomtune$x)
+randomtrain = train(randomtree, traintask)
+getLearnerModel(randomtrain)
+
+```
+
+
+```{r}
+randompredict = predict(randomtrain,testtask)
+table(Autotest$high_mileage, randompredict$data$response)
+```
+here the accuraccy is 94%
+-----------------------------------------------------------------------------------------------------------------
+e. Boosting with tuning
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+f. SVM with linear kernel tuning
+
+creating an learner , hyperparameter and Grid controller
+```{r}
+svmlearner = makeLearner("classif.ksvm", predict.type = "response")
+
+svmparameter<- makeParamSet(
+makeDiscreteParam("C", values = 2^c(-8,-4,-2,0)), #cost parameters
+makeDiscreteParam("sigma", values = 2^c(-8,-4,0,4)) #RBF Kernel Parameter
+)
+svmcontrol = makeTuneControlGrid()
+svmtune = tuneParams(svmlearner, task = traintask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+```
+
+
+```{r}
+svmtune$y
+```
+
+
+
+```{r}
+svmtune$x
+
+```
+
+
+
+
+```{r}
+svmmodel = setHyperPars(svmlearner, par.vals  = svmtune$x)
+svmtrain = train(svmmodel, traintask)
+getLearnerModel(svmtrain)
+```
+
+
+```{r}
+predictsvm = predict(svmtrain, testtask)
+table (Autotest$high_mileage, predictsvm$data$response)
+```
+Same here the accuracy is also 94%
+
+-----------------------------------------------------------------------------------------------------------------
+g. SVM with polynomial kernel and tuning
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+h. LDA analysis(bonus 5):
+```{r}
+ldalearner = makeLearner("classif.lda", predict.type = "response")
+ldatrain = train(ldalearner, traintask)
+predictlda = predict(ldatrain, testtask)
+table(Autotest$high_mileage, predictlda$data$response)
+```
+Here the LDA accuracy is 91 %
+
+
+```{r}
+cvlda = crossval(ldalearner, task = traintask, ,iters = 3,stratify = TRUE,measures = acc,show.info = F)
+cvlda$aggr
+```
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+5. Report
+a. Report the accuracy if you predicted the most frequent class for all observations. This is
+your baseline.
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+b. Plot of cross validation accuracy as a function of the tuning parameter for each classifier.
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+i. For the decision tree, plot the tree.
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+
+c. Which classifier does best?
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------
+d. Which one would you use? And does this classifier match your initial guess?
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------

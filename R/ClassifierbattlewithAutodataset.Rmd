@@ -1,6 +1,6 @@
 ---
-title: "Clasifer battle with Auto dataset"
-author: "Bhasheyam Krishnan "
+title: "Hw-7"
+author: "Bhasheyam Krishnan - A23080078, Hemath Balakrishna - A20385274"
 date: "14 November 2017"
 output: pdf_document
 ---
@@ -68,6 +68,15 @@ cv.logistic = crossval(learner = logistic, task = traintask,iter = 3, stratify =
 cv.logistic$aggr
 cv.logistic$measures.test
 ```
+
+```{r}
+
+```
+
+
+
+
+
 ```{r}
 logmodel = train(logistic,traintask)
 getLearnerModel(logmodel)
@@ -154,11 +163,16 @@ c. Bagging with tuning
 
 ```{r}
 
-baglearn = makeLearner("classif.boosting", predict.type = "response")
-
+baglearn = makeLearner("classif.rpart")
+bag = makeBaggingWrapper(baglearn, bw.iters = 50, bw.replace = TRUE, bw.size = 0.8, bw.feats = 3/4)
+cvbag = makeResampleDesc("CV", iters = 10)
+r = resample(learner = bag, task = traintask, resampling = cvbag, show.info = FALSE)
+r$aggr
 ```
 ```{r}
-
+bagparam = makeParamSet(makeDiscreteParam("mfinal",values= 15))
+badcontrol = makeTuneControlGrid()
+bagtune = tuneParams(learner = bag, task = traintask, resampling =set_cv,par.set = bagparam,control = badcontrol, measures = acc )
 ```
 
 
@@ -181,7 +195,7 @@ makeIntegerParam("ntree",lower = 50, upper = 500),
 makeIntegerParam("mtry", lower = 3, upper = 10),
 makeIntegerParam("nodesize", lower = 10, upper = 50)
 )
-randomcontrol <- makeTuneControlRandom(maxit = 50L)
+randomcontrol = makeTuneControlRandom(maxit = 50L)
 randomcross = makeResampleDesc("CV",iter =  3L)
 ```
 
@@ -198,6 +212,8 @@ randomtune <- tuneParams(learner = randomforest, resampling = randomcross, task 
 ```{r}
 randomtune$y
 ```
+
+
 ```{r}
 randomtune$x
 ```

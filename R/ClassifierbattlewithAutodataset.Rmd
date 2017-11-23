@@ -2,17 +2,22 @@
 title: "Hw-7"
 author: "Bhasheyam Krishnan - A23080078, Hemath Balakrishna - A20385274"
 date: "14 November 2017"
-output: pdf_document
+output:
+  word_document: default
+  pdf_document: default
 ---
 1. Create a new column in the dataset, high_mileage that is true if mpg > mean(mpg). Else it’s
 false. You will try to predict these variables as a function of the predictors. DO NOT USE name
 and origin is a categorical as before.
 
 ```{r}
+library(ISLR)
+
 Autodata = Auto[1:7]
 Autodata$origin = as.factor(Auto$origin)
 Autodata$high_mileage = apply(Autodata, 1, function(x) x[1] > mean(Autodata$mpg))
 Autodata
+summary(Autodata$high_mileage)
 ```
 
 
@@ -26,8 +31,6 @@ Autodata = Autodata[ordered(jumble),]
 index = sample(2, nrow(Autodata), replace = TRUE, prob = c(0.80,0.20))
 Autotrain = Autodata[index == 1,]
 Autotest = Autodata[index == 2,]
-
-
 ```
 
 
@@ -37,7 +40,7 @@ Autotest = Autodata[index == 2,]
 
 Answer :
 
-
+Random Forest, as it reduces overfitting: by averaging several trees, there is a significantly lower risk of overfitting than decision tree.
 
 -----------------------------------------------------------------------------------------------------------------
 4. Predict high mpg with these classifiers:
@@ -63,14 +66,11 @@ testtask <- dropFeatures(task = testtask,features = c("mpg"))
 
 a. Logistic regression tuning (i.e., with ridge regularization)
 ```{r}
+set.seed(1)
 logistic = makeLearner("classif.logreg",predict.type = "response")
 cv.logistic = crossval(learner = logistic, task = traintask,iter = 3, stratify = TRUE,measures = acc,show.info = F)
 cv.logistic$aggr
 cv.logistic$measures.test
-```
-
-```{r}
-
 ```
 
 
@@ -80,6 +80,7 @@ cv.logistic$measures.test
 ```{r}
 logmodel = train(logistic,traintask)
 getLearnerModel(logmodel)
+logmodel$task.desc$positive
 ```
 ```{r}
 logpridect = predict(logmodel,testtask)
@@ -90,16 +91,18 @@ Here the Acuuracy is 93 %
 
 
 
+
 -----------------------------------------------------------------------------------------------------------------
 
 b. Decision trees with tuning (e.g., you will set the splitting criterion)
 
 ```{r}
+set.seed(1)
  tree <- makeLearner("classif.rpart", predict.type = "response")
 ```
 
 ```{r}
-set_cv = makeResampleDesc("CV",iters = 3L)
+set_cv = makeResampleDesc("CV",iters = 10L)
 
 ```
 
@@ -138,6 +141,7 @@ destree = train(traintree,traintask)
 getLearnerModel(destree)
 ```
 ```{r}
+library(rpart.plot)
 prp(destree$learner.model)
 ```
 
@@ -153,7 +157,7 @@ despredict = predict(destree,testtask)
 table(Autotest$high_mileage,despredict$data$response)
 ```
 
-Here the Accuracy is 91%
+Here the Accuracy is 92%
 
 
 
@@ -162,26 +166,51 @@ c. Bagging with tuning
 
 
 ```{r}
-
+set.seed(1)
 baglearn = makeLearner("classif.rpart")
 bag = makeBaggingWrapper(baglearn, bw.iters = 50, bw.replace = TRUE, bw.size = 0.8, bw.feats = 3/4)
-cvbag = makeResampleDesc("CV", iters = 10)
+cvbag = makeResampleDesc("CV", iters = 3)
 r = resample(learner = bag, task = traintask, resampling = cvbag, show.info = FALSE)
 r$aggr
 ```
 ```{r}
-bagparam = makeParamSet(makeDiscreteParam("mfinal",values= 15))
+bagparam = makeParamSet( makeNumericParam("xval", lower = 1, upper = 15))
 badcontrol = makeTuneControlGrid()
 bagtune = tuneParams(learner = bag, task = traintask, resampling =set_cv,par.set = bagparam,control = badcontrol, measures = acc )
 ```
 
 
+```{r}
+bagtune$y
+```
+```{r}
+bagtune$x
+```
+```{r}
+bagging =  setHyperPars(bag, par.vals = bagtune$x)
+```
+
+
+
+
+```{r}
+bagtrain = train(bag,traintask)
+bagtrain$learner.model$next.model
+```
+```{r}
+predictbag = predict(bagtrain, testtask)
+table(Autotest$high_mileage,predictbag$data$response)
+
+```
+
+Here the Accuracy is 94 %
 
 -----------------------------------------------------------------------------------------------------------------
 d. Random forest with tuning
 
 
 ```{r}
+
 randomforest = makeLearner("classif.randomForest",predict.type = "response", par.vals = list(ntree = 200, mtry = 3))
 randomforest$par.vals = list(importance = TRUE)
 
@@ -190,6 +219,7 @@ randomforest$par.vals = list(importance = TRUE)
 
 Creating a learner
 ```{r}
+set.seed(1)
 randomparam <- makeParamSet(
 makeIntegerParam("ntree",lower = 50, upper = 500),
 makeIntegerParam("mtry", lower = 3, upper = 10),
@@ -231,28 +261,107 @@ getLearnerModel(randomtrain)
 randompredict = predict(randomtrain,testtask)
 table(Autotest$high_mileage, randompredict$data$response)
 ```
-here the accuraccy is 94%
+here the accuraccy is 92.5%
 -----------------------------------------------------------------------------------------------------------------
 e. Boosting with tuning
+```{r}
+
+library(mlr)
+set.seed(1)
+boost = makeLearner("classif.gbm", predict.type = "response")
+
+gbmcontrol =  makeTuneControlRandom(maxit = 50L)
+
+gbmcv = makeResampleDesc("CV",iters = 3L)
 
 
 
 
+
+
+gbmparam =  makeParamSet(makeDiscreteParam("distribution", values = "bernoulli"),
+makeIntegerParam("n.trees", lower = 700, upper = 1000), #number of trees
+makeIntegerParam("interaction.depth", lower = 2, upper = 6), #depth of tree
+makeIntegerParam("n.minobsinnode", lower = 10, upper = 50),
+makeNumericParam("shrinkage",lower = 0.01, upper = 0.7))
+
+
+
+gbmtune = tuneParams(learner = boost, task = traintask, par.set = gbmparam, control = gbmcontrol, measures = acc, resampling = gbmcv)
+```
+```{r}
+gbmtune$y
+```
+
+
+```{r}
+gbmtune$x
+```
+
+```{r}
+gbmboost = setHyperPars(boost,par.vals = gbmtune$x)
+```
+```{r}
+gbmtrain = train(gbmboost,traintask)
+gbmpredict = predict(gbmtrain,testtask)
+table(Autotest$high_mileage,gbmpredict$data$response)
+```
+
+Here the Acuuracy is 93.8%
 -----------------------------------------------------------------------------------------------------------------
 f. SVM with linear kernel tuning
 
+
+
 creating an learner , hyperparameter and Grid controller
 ```{r}
-svmlearner = makeLearner("classif.ksvm", predict.type = "response")
+set.seed(1)
+svmlearnerl = makeLearner("classif.ksvm", predict.type = "response")
 
-svmparameter<- makeParamSet(
-makeDiscreteParam("C", values = 2^c(-8,-4,-2,0)), #cost parameters
-makeDiscreteParam("sigma", values = 2^c(-8,-4,0,4)) #RBF Kernel Parameter
-)
+randomcross = makeResampleDesc("CV",iters = 3L)
+
+svmparameter<- makeParamSet(makeNumericParam("C", lower = -5, upper = 5, trafo = function(x) 2^x))
+
+
 svmcontrol = makeTuneControlGrid()
-svmtune = tuneParams(svmlearner, task = traintask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+svmtunel = tuneParams(svmlearnerl, task = traintask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+```
+```{r}
+svmtunel$x
 ```
 
+
+```{r}
+svmtunel$y
+```
+```{r}
+svmmodell = setHyperPars(svmlearnerl,par.vals = svmtunel$x)
+svmtrainl = train(svmmodell, traintask)
+getLearnerModel(svmtrainl)
+
+```
+
+```{r}
+predictsvml = predict(svmtrainl, testtask)
+table (Autotest$high_mileage, predictsvml$data$response)
+```
+Here the acuuracy is 91%
+
+g. SVM with polynomial kernel and tuning
+
+
+```{r}
+set.seed(1)
+svmlearner = makeLearner("classif.ksvm", predict.type = "response")
+
+randomcross = makeResampleDesc("CV",iters = 3L)
+
+svmparameter<- makeParamSet(makeNumericParam("C", lower = -5, upper = 5, trafo = function(x) 2^x),
+                            makeDiscreteParam("sigma", values = 2^c(-8,-4,0,4))) #RBF Kernel Parameter
+
+svmcontrol = makeTuneControlGrid()
+svmtune= tuneParams("classif.ksvm", task = traintask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+```
 
 ```{r}
 svmtune$y
@@ -269,7 +378,7 @@ svmtune$x
 
 
 ```{r}
-svmmodel = setHyperPars(svmlearner, par.vals  = svmtune$x)
+svmmodel = setHyperPars(svmlearner,par.vals = svmtune$x)
 svmtrain = train(svmmodel, traintask)
 getLearnerModel(svmtrain)
 ```
@@ -279,10 +388,10 @@ getLearnerModel(svmtrain)
 predictsvm = predict(svmtrain, testtask)
 table (Autotest$high_mileage, predictsvm$data$response)
 ```
-Same here the accuracy is also 94%
+Same here the accuracy is also 89%
 
 -----------------------------------------------------------------------------------------------------------------
-g. SVM with polynomial kernel and tuning
+
 
 
 
@@ -299,7 +408,7 @@ Here the LDA accuracy is 91 %
 
 
 ```{r}
-cvlda = crossval(ldalearner, task = traintask, ,iters = 3,stratify = TRUE,measures = acc,show.info = F)
+cvlda = crossval(ldalearner, task = traintask, iters = 3,stratify = TRUE,measures = acc,show.info = F)
 cvlda$aggr
 ```
 
@@ -321,14 +430,37 @@ your baseline.
 -----------------------------------------------------------------------------------------------------------------
 b. Plot of cross validation accuracy as a function of the tuning parameter for each classifier.
 
+```{r}
+x = c("Logistic reg", "decision tree", "Bagging","ran forest","Bosting","SVM linear","SVM poly","LDA")
+y =c(0.8906833,0.9388105 ,0.9164315, 0.8937018,0.9258464 ,0.9226724,0.9130259,0.8778 )
+z = c(93,92,93,92.5,93.8,91,89,91) 
+names(y) = x
+names(z) = x
+```
 
 
+```{r}
+graph = as.data.frame(x)
+graph$crossvalaccuracy = y
+graph$accuracy = z
+```
+```{r}
+plot(graph$x,graph$crossvalaccuracy , xlim= c(1,8),cex.axis = 0.8)
+
+```
+```{r}
+plot(graph$x,graph$accuracy , xlim= c(1,8),cex.axis = 0.8)
+```
 
 -----------------------------------------------------------------------------------------------------------------
 
 i. For the decision tree, plot the tree.
 
 
+```{r}
+library(rattle)	
+fancyRpartPlot(destree$learner.model)	
+```
 
 
 -----------------------------------------------------------------------------------------------------------------
@@ -338,13 +470,14 @@ i. For the decision tree, plot the tree.
 c. Which classifier does best?
 
 
-
+After the Analysis Bossting with tuning doing better. as we can see the Cv Accuracy graph and accuracy Graph.
 
 -----------------------------------------------------------------------------------------------------------------
 d. Which one would you use? And does this classifier match your initial guess?
 
 
-
+We boosting or decision as boosting Performance is better.
+Decision trees implicitly perform variable screening or feature selectionso will have model which process all the features also for this dataset it performence is considerably better nxt to bossting.
 
 
 

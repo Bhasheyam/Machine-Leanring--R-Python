@@ -1,0 +1,55 @@
+---
+title: "KNN Analysis"
+output: html_notebook
+---
+
+```{r}
+setwd("B://Machine Learning")  
+data =read.csv("Datasets//Prostate_Cancer.csv",stringsAsFactors = FALSE)
+data = data[2:10]
+data
+```
+
+```{r}
+data$diagnosis_result = factor(data$diagnosis_result, levels = c("B", "M"), labels = c("Benign", "Malignant"))
+round(prop.table(table(data$diagnosis)) * 100, digits = 1)  
+
+
+```
+
+
+
+```{r}
+data$diagnosis_result
+normalize <- function(x) {
+return ((x - min(x)) / (max(x) - min(x))) }
+ndata = as.data.frame(lapply(data[2:9], normalize))
+ndata
+```
+
+
+
+```{r}
+train1 = ndata[1:65,]
+test1 = ndata[66:100,]
+trainl = data[1:65,1]
+testl = data[66:100,1]
+dim(train1)
+dim(test1)
+trainl
+```
+
+```{r}
+library(class)
+model = knn(train = train1, test = test1, cl = trainl, k=10)
+```
+
+```{r}
+summary(model)
+```
+
+```{r}
+library(gmodels)
+CrossTable(testl,model, chisq = FALSE)
+```
+

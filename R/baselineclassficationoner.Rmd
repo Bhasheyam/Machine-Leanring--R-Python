@@ -1,0 +1,18 @@
+---
+title: "OneR"
+output: html_notebook
+---
+
+```{r}
+library(OneR)
+library(ISLR)
+datat = iris
+modelt = optbin(datat)
+model = OneR( modelt,verbose = TRUE)
+summary(model)
+```
+```{r}
+prediction <- predict(model, modelt)
+eval_model(prediction, modelt)
+```
+

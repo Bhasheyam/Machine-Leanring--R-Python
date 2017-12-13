@@ -1,0 +1,368 @@
+---
+title: "Titanic"
+author: "Bhasheyam"
+date: "12 December 2017"
+output: html_document
+---
+
+Reading the Training and test dataset
+
+```{r}
+Train = read.csv("train.csv")
+Test = read.csv("test.csv")
+Test$Survived = ""
+```
+
+
+
+```{r}
+head(Train)
+```
+
+From the above we can some of the columsn has NA, and soe columns need to factorized
+
+Feature sex and embarkment need to factorized.
+
+Features like name, PassengerID and Ticket, cabin can be elemenated as they dont contribute anything significant for the classification
+
+
+In the places of all NA , mean of age of that gender is filled
+
+```{r}
+
+Train$Sex = as.factor(Train$Sex)
+Train$Embarked = as.factor(Train$Embarked)
+```
+```{r}
+
+
+temp = Train[Train$Sex == "male",]
+temp1 = Train[Train$Sex == "female",]
+mavg = mean(temp$Age,na.rm=TRUE)
+favg = mean(temp1$Age,na.rm=TRUE)
+mavg
+favg
+```
+
+
+```{r}
+
+change = function(x){
+  if ( is.na(x[6])){
+    if(x[5] == "male"){
+      x[6] = mavg
+    }
+    else {
+        x[6] = favg
+         }
+  }
+  else{
+    x[6] = x[6]
+  }
+
+}
+Train$Age = apply(Train, 1, change)
+```
+```{r}
+
+Train$Age = as.numeric(Train$Age)
+```
+
+```{r}
+Train$Age =  cut(Train$Age,breaks=c(0,12,25,50,80),labels=c("child","Teen","Adult","Aged"))
+
+```
+```{r}
+Train$Age = as.factor(Train$Age)
+str(Train$Age)
+```
+
+
+```{r}
+
+Test$Sex = as.factor(Test$Sex)
+Test$Embarked = as.factor(Test$Embarked)
+```
+```{r}
+
+
+temp3 = Test[Test$Sex == "male",]
+temp2 = Test[Test$Sex == "female",]
+mavg1 = mean(temp3$Age,na.rm=TRUE)
+favg1 = mean(temp2$Age,na.rm=TRUE)
+
+```
+
+
+```{r}
+
+change = function(x){
+  if ( is.na(x[5])){
+    if(x[4] == "male"){
+      x[5] = mavg
+    }
+    else {
+        x[5] = favg
+         }
+  }
+  else{
+    x[5] = x[5]
+  }
+
+}
+Test$Age = apply(Test, 1, change)
+```
+```{r}
+
+Test$Age = as.numeric(Test$Age)
+```
+
+```{r}
+Test$Age =  cut(Test$Age,breaks=c(0,12,25,50,80),labels=c("child","Teen","Adult","Aged"))
+
+```
+```{r}
+Test$Age = as.factor(Test$Age)
+str(Test$Age)
+```
+```{r}
+names(Train)
+```
+
+```{r}
+Train = subset(Train, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
+ "Fare" ,"Embarked"   ))
+```
+
+```{r}
+Test = subset(Test, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
+ "Fare" ,"Embarked"   ))
+```
+
+
+
+```{r}
+Train$Survived = as.numeric(Train$Survived)
+Train$Survived = as.factor(Train$Survived)
+```
+```{r}
+for(i in 1:ncol(Train)){
+  Train[is.na(Train[,i]), i] <- mean(Train[,i], na.rm = TRUE)
+}
+```
+```{r}
+fix(Train)
+```
+
+```{r}
+for(i in 1:ncol(Test)){
+  Test[is.na(Test[,i]), i] <- mean(Test[,i], na.rm = TRUE)
+}
+```
+```{r}
+fix(Test)
+```
+
+
+```{r}
+library(mlr)
+Tittask = makeClassifTask(data = Train,target = "Survived" )
+titetask = makeClassifTask(data = Test,target = "Survived")
+```
+
+Now let use series of classifier to find the best fiting model.
+
+Since data is less only 3-fold cross validation done ans using mlr package for classifier
+
+```{r}
+set.seed(1)
+logistic = makeLearner("classif.logreg",predict.type = "response")
+cv.logistic = crossval(learner = logistic, task = Tittask,iter = 2, stratify = TRUE,measures = acc,show.info = F)
+cv.logistic$aggr
+cv.logistic$measures.test
+```
+
+
+
+
+
+```{r}
+logmodel = train(logistic,Tittask)
+getLearnerModel(logmodel)
+logmodel$task.desc$positive
+```
+
+```{r}
+logpridect = predict(logmodel,titetask)
+
+logpridect$data$response
+```
+```{r}
+summary(logpridect$data$response)
+```
+
+```{r}
+set.seed(1)
+ tree <- makeLearner("classif.rpart", predict.type = "response")
+```
+
+```{r}
+set_cv = makeResampleDesc("CV",iters = 3L)
+
+```
+
+
+```{r}
+gs <- makeParamSet(makeIntegerParam("minsplit",lower = 10, upper = 50),
+makeIntegerParam("minbucket", lower = 5, upper = 50),
+makeNumericParam("cp", lower = 0.001, upper = 0.2))
+```
+
+```{r}
+gscontrol =  makeTuneControlGrid()
+```
+```{r}
+tune = tuneParams(learner = tree, resampling = set_cv, task = Tittask, par.set = gs, control = gscontrol, measures = acc)
+```
+```{r}
+tune$x
+```
+The above are the best tuning varaible from the tuning
+```{r}
+tune$y
+
+```
+```{r}
+traintree = setHyperPars(tree,par.vals = tune$x)
+```
+
+Fitting the Tuning variable in the Tree
+
+```{r}
+destree = train(traintree,Tittask)
+
+```
+```{r}
+library(rpart.plot)
+prp(destree$learner.model)
+```
+
+```{r}
+despredict = predict(destree,titetask)
+summary(despredict$data$response)
+```
+
+
+
+```{r}
+set.seed(1)
+baglearn = makeLearner("classif.rpart")
+bag = makeBaggingWrapper(baglearn, bw.iters = 50, bw.replace = TRUE, bw.size = 0.8, bw.feats = 3/4)
+cvbag = makeResampleDesc("CV", iters = 3)
+
+```
+```{r}
+bagparam = makeParamSet( makeNumericParam("xval", lower = 1, upper = 15))
+badcontrol = makeTuneControlGrid()
+bagtune = tuneParams(learner = bag, task = Tittask, resampling =set_cv,par.set = bagparam,control = badcontrol, measures = acc )
+```
+
+
+```{r}
+bagtune$y
+```
+```{r}
+bagtune$x
+```
+```{r}
+bagging =  setHyperPars(bag, par.vals = bagtune$x)
+```
+
+
+
+
+```{r}
+bagtrain = train(bag,Tittask)
+bagtrain$learner.model$next.model
+```
+```{r}
+predictbag = predict(bagtrain, titetask)
+summary(predictbag$data$response)
+
+```
+
+
+
+d. Random forest with tuning
+
+
+```{r}
+
+randomforest = makeLearner("classif.randomForest",predict.type = "response", par.vals = list(ntree = 200, mtry = 3))
+randomforest$par.vals = list(importance = TRUE)
+
+```
+
+
+Creating a learner
+```{r}
+set.seed(1)
+randomparam <- makeParamSet(
+makeIntegerParam("ntree",lower = 50, upper = 500),
+makeIntegerParam("mtry", lower = 3, upper = 10),
+makeIntegerParam("nodesize", lower = 10, upper = 50)
+)
+randomcontrol = makeTuneControlRandom(maxit = 50L)
+randomcross = makeResampleDesc("CV",iter =  3L)
+```
+
+
+Finding the Tuning value
+
+```{r}
+randomtune <- tuneParams(learner = randomforest, resampling = randomcross, task = Tittask, par.set = randomparam, control = randomcontrol, measures = acc)
+
+```
+
+```{r}
+randomtune$y
+```
+
+
+```{r}
+randomtune$x
+```
+The above are the best Tuning variable
+
+```{r}
+randomtree = setHyperPars(randomforest, par.vals = randomtune$x)
+randomtrain = train(randomtree, Tittask)
+getLearnerModel(randomtrain)
+
+```
+
+
+
+```{r}
+randompredict = predict(randomtrain,titetask)
+summary( randompredict$data$response)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

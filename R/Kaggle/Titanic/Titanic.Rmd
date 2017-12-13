@@ -195,7 +195,7 @@ logmodel$task.desc$positive
 ```{r}
 logpridect = predict(logmodel,titetask)
 
-logpridect$data$response
+summary(logpridect$data$response)
 ```
 ```{r}
 summary(logpridect$data$response)
@@ -252,6 +252,13 @@ despredict = predict(destree,titetask)
 summary(despredict$data$response)
 ```
 
+```{r}
+datacsv2 = as.data.frame(temptest$PassengerId)  
+datacsv2$Survived = despredict$data$response
+```
+```{r}
+write.csv(datacsv2, file = "Submision2.csv", row.names = FALSE)
+```
 
 
 ```{r}
@@ -290,7 +297,20 @@ predictbag = predict(bagtrain, titetask)
 summary(predictbag$data$response)
 
 ```
+```{r}
+temptest = Test = read.csv("test.csv")
+```
+```{r}
+names(Train)
+```
 
+```{r}
+datacsv = as.data.frame(temptest$PassengerId)  
+datacsv$Survived = predictbag$data$response
+```
+```{r}
+write.csv(datacsv, file = "Submision.csv", row.names = FALSE)
+```
 
 
 d. Random forest with tuning
@@ -351,10 +371,61 @@ summary( randompredict$data$response)
 
 
 
+```{r}
+
+library(mlr)
+set.seed(1)
+boost = makeLearner("classif.gbm", predict.type = "response")
+
+gbmcontrol =  makeTuneControlRandom(maxit = 50L)
+
+gbmcv = makeResampleDesc("CV",iters = 3L)
 
 
 
 
+
+
+gbmparam =  makeParamSet(makeDiscreteParam("distribution", values = "bernoulli"),
+makeIntegerParam("n.trees", lower = 700, upper = 1000), #number of trees
+makeIntegerParam("interaction.depth", lower = 2, upper = 6), #depth of tree
+makeIntegerParam("n.minobsinnode", lower = 10, upper = 50),
+makeNumericParam("shrinkage",lower = 0.01, upper = 0.7))
+
+
+
+gbmtune = tuneParams(learner = boost, task = Tittask, par.set = gbmparam, control = gbmcontrol, measures = acc, resampling = gbmcv)
+```
+
+
+
+
+
+```{r}
+gbmtune$y
+```
+
+
+```{r}
+gbmtune$x
+```
+
+```{r}
+gbmboost = setHyperPars(boost,par.vals = gbmtune$x)
+```
+```{r}
+gbmtrain = train(gbmboost,Tittask)
+gbmpredict = predict(gbmtrain,titetask)
+summary(gbmpredict$data$response)
+```
+
+```{r}
+datacsv1 = as.data.frame(temptest$PassengerId)  
+datacsv1$Survived = gbmpredict$data$response
+```
+```{r}
+write.csv(datacsv1, file = "Submision1.csv", row.names = FALSE)
+```
 
 
 

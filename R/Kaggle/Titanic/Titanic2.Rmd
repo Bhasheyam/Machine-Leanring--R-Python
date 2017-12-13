@@ -1,7 +1,7 @@
 ---
-title: "Titanic"
+title: "Without classifiying AGE Titanic"
 author: "Bhasheyam"
-date: "12 December 2017"
+date: "13 December 2017"
 output: html_document
 ---
 
@@ -68,14 +68,6 @@ Train$Age = apply(Train, 1, change)
 Train$Age = as.numeric(Train$Age)
 ```
 
-```{r}
-Train$Age =  cut(Train$Age,breaks=c(0,12,25,50,80),labels=c("child","Teen","Adult","Aged"))
-
-```
-```{r}
-Train$Age = as.factor(Train$Age)
-str(Train$Age)
-```
 
 
 ```{r}
@@ -117,17 +109,6 @@ Test$Age = apply(Test, 1, change)
 Test$Age = as.numeric(Test$Age)
 ```
 
-```{r}
-Test$Age =  cut(Test$Age,breaks=c(0,12,25,50,80),labels=c("child","Teen","Adult","Aged"))
-
-```
-```{r}
-Test$Age = as.factor(Test$Age)
-str(Test$Age)
-```
-```{r}
-names(Train)
-```
 
 ```{r}
 Train = subset(Train, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
@@ -206,7 +187,7 @@ datacsv3 = as.data.frame(temptest$PassengerId)
 datacsv3$Survived = logpridect$data$response
 ```
 ```{r}
-write.csv(datacsv3, file = "Submision3.csv", row.names = FALSE)
+write.csv(datacsv3, file = "Submision13.csv", row.names = FALSE)
 ```
 ```{r}
 set.seed(1)
@@ -264,7 +245,7 @@ datacsv2 = as.data.frame(temptest$PassengerId)
 datacsv2$Survived = despredict$data$response
 ```
 ```{r}
-write.csv(datacsv2, file = "Submision2.csv", row.names = FALSE)
+write.csv(datacsv2, file = "Submision12.csv", row.names = FALSE)
 ```
 
 
@@ -316,7 +297,7 @@ datacsv = as.data.frame(temptest$PassengerId)
 datacsv$Survived = predictbag$data$response
 ```
 ```{r}
-write.csv(datacsv, file = "Submision.csv", row.names = FALSE)
+write.csv(datacsv, file = "Submision10.csv", row.names = FALSE)
 ```
 
 
@@ -427,11 +408,11 @@ summary(gbmpredict$data$response)
 ```
 
 ```{r}
-datacsv1 = as.data.frame(temptest$PassengerId)  
-datacsv1$Survived = gbmpredict$data$response
+datacsv0 = as.data.frame(temptest$PassengerId)  
+datacsv0$Survived = gbmpredict$data$response
 ```
 ```{r}
-write.csv(datacsv1, file = "Submision1.csv", row.names = FALSE)
+write.csv(datacsv0, file = "Submision04.csv", row.names = FALSE)
 ```
 
 

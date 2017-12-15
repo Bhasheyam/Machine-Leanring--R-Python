@@ -1,0 +1,78 @@
+---
+title: "What is the Cusine Food dataset"
+author: "Bhasheyam"
+date: "13 December 2017"
+output: html_document
+---
+
+Read the data from the file
+
+```{r}
+library(rjson)
+cookdata = fromJSON(file = "train.json")
+cooktest = fromJSON(file = "test.json")
+```
+Result Preparation
+
+
+```{r}
+tid = c()
+for ( datat in cooktest){
+   tid = c(tid,datat$id)
+}
+resultcook = as.data.frame(tid)
+fix(resultcook)
+```
+
+Find all the Cusine in the list find the ingredients used in the cusine.
+```{r}
+cusinel = c()
+for ( data1 in cookdata){
+    if (data1$cuisine %in% cusinel){
+      
+    }
+    else{
+      temp = c(data1$cuisine)
+      
+      cusinel =c(cusinel,temp)
+    }
+ 
+  
+}
+
+
+```
+```{r}
+n = length(cusinel)
+cusinelist = list()
+for (i in 1:n){
+  cusinelist[[cusinel[i]]]=c(1)
+  
+  
+}
+```
+```{r}
+cusinelist[["indian"]] = c(cusinelist[["indian"]], "new")
+cusinelist
+```
+```{r}
+lst = list()
+lst$a <- list()
+lst$b <- list()
+lst$a[["foo"]] <- "hi"
+lst$b[["foo"]] <- c("hi", "SO")
+lst$b[["foo"]] =  c(lst$b[["foo"]],"new")
+lst
+```
+
+Now we have the list of cusine, so lets make a list for all cusine with ingredients
+```{r}
+n = length(cusinel)
+for (i in 1:n){
+  if (cusinel[i] == "indian"){
+    cusinel[i] = c(cusinel[i],"new")
+  }
+}
+cusinel
+```
+

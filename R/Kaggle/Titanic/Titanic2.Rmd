@@ -112,12 +112,11 @@ Test$Age = as.numeric(Test$Age)
 
 ```{r}
 Train = subset(Train, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
- "Fare" ,"Embarked"   ))
+ "Embarked"   ))
 ```
 
 ```{r}
-Test = subset(Test, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
- "Fare" ,"Embarked"   ))
+Test = subset(Test, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch", "Embarked"   ))
 ```
 
 
@@ -183,11 +182,11 @@ summary(logpridect$data$response)
 ```
 
 ```{r}
-datacsv3 = as.data.frame(temptest$PassengerId)  
-datacsv3$Survived = logpridect$data$response
+datacsv31 = as.data.frame(temptest$PassengerId)  
+datacsv31$Survived = logpridect$data$response
 ```
 ```{r}
-write.csv(datacsv3, file = "Submision13.csv", row.names = FALSE)
+write.csv(datacsv31, file = "Submisionl.csv", row.names = FALSE)
 ```
 ```{r}
 set.seed(1)
@@ -241,11 +240,11 @@ summary(despredict$data$response)
 ```
 
 ```{r}
-datacsv2 = as.data.frame(temptest$PassengerId)  
-datacsv2$Survived = despredict$data$response
+datacsv21 = as.data.frame(temptest$PassengerId)  
+datacsv21$Survived = despredict$data$response
 ```
 ```{r}
-write.csv(datacsv2, file = "Submision12.csv", row.names = FALSE)
+write.csv(datacsv21, file = "Submisiondes.csv", row.names = FALSE)
 ```
 
 
@@ -293,11 +292,11 @@ names(Train)
 ```
 
 ```{r}
-datacsv = as.data.frame(temptest$PassengerId)  
-datacsv$Survived = predictbag$data$response
+datacsv1 = as.data.frame(temptest$PassengerId)  
+datacsv1$Survived = predictbag$data$response
 ```
 ```{r}
-write.csv(datacsv, file = "Submision10.csv", row.names = FALSE)
+write.csv(datacsv1, file = "Submisionbag.csv", row.names = FALSE)
 ```
 
 
@@ -412,7 +411,7 @@ datacsv0 = as.data.frame(temptest$PassengerId)
 datacsv0$Survived = gbmpredict$data$response
 ```
 ```{r}
-write.csv(datacsv0, file = "Submision04.csv", row.names = FALSE)
+write.csv(datacsv0, file = "Submisionboost.csv", row.names = FALSE)
 ```
 
 

@@ -11,17 +11,18 @@ Read the data from the file
 library(rjson)
 cookdata = fromJSON(file = "train.json")
 cooktest = fromJSON(file = "test.json")
+head(cookdata)
 ```
 Result Preparation
 
 
 ```{r}
-tid = c()
+id = c()
 for ( datat in cooktest){
-   tid = c(tid,datat$id)
+   id = c(id,datat$id)
 }
-resultcook = as.data.frame(tid)
-fix(resultcook)
+resultcook = as.data.frame(id)
+
 ```
 
 Find all the Cusine in the list find the ingredients used in the cusine.
@@ -42,37 +43,208 @@ for ( data1 in cookdata){
 
 
 ```
-```{r}
-n = length(cusinel)
-cusinelist = list()
-for (i in 1:n){
-  cusinelist[[cusinel[i]]]=c(1)
-  
-  
-}
-```
-```{r}
-cusinelist[["indian"]] = c(cusinelist[["indian"]], "new")
-cusinelist
-```
-```{r}
-lst = list()
-lst$a <- list()
-lst$b <- list()
-lst$a[["foo"]] <- "hi"
-lst$b[["foo"]] <- c("hi", "SO")
-lst$b[["foo"]] =  c(lst$b[["foo"]],"new")
-lst
-```
 
-Now we have the list of cusine, so lets make a list for all cusine with ingredients
+
+
+
 ```{r}
-n = length(cusinel)
-for (i in 1:n){
-  if (cusinel[i] == "indian"){
-    cusinel[i] = c(cusinel[i],"new")
-  }
-}
 cusinel
 ```
+
+
+
+```{r}
+n = length(cusinel)
+cusinelistrep =list()
+for (i in 1:n){
+  cusinelistrep[[cusinel[i]]]=c()
+  
+}
+
+
+```
+
+```{r}
+for(cooks in cookdata){
+  for (ingredients in cooks$ingredients){
+    
+      cusinelistrep[[cooks$cuisine]] = c( cusinelistrep[[cooks$cuisine]], ingredients)
+    
+    
+  }
+  
+  
+}
+
+
+```
+
+```{r}
+for (addi in cusinel){tempp =table(cusinelistrep[[addi]])
+}
+tempp[names(tempp)=="allspice"] + 1
+```
+
+
+
+
+Now we have the list of cusine, so lets make a list for all cusine with ingredients
+
+
+```{r}
+ingredientsall = c()
+for(cooks in cookdata){
+  for (ingredients in cooks$ingredients){
+    if (ingredients %in% ingredientsall){
+      
+    }
+    else{
+      ingredientsall = c( ingredientsall, ingredients)
+    }
+    
+  }
+  
+  
+}
+traincook = as.data.frame(ingredientsall)
+fix(traincook)
+```
+
+```{r}
+for (addin in cusinel){
+   countdoc = length(cusinelistrep[[addin]])
+   temp =table(cusinelistrep[[addin]])
+   templist = c()
+   for (onein in ingredientsall){
+ 
+
+  
+  total = 0
+  
+  
+   }
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Remove data which are in almost more than 3 cusine
+```{r}
+max = 3
+remove = function(list2, word){
+  for (lis1 in list2){
+    lis1 = setdiff(lis1,word)
+  }
+  return (list2)
+}
+checkcount = function(list1,word){
+  temp = 0
+  for (lis1 in list1){
+    
+    if ( word %in% lis1){
+       temp = temp + 1
+    }
+    
+  }
+  if (temp> max){
+    list1 =remove(cusinelist,word)
+  }
+  return (list1)
+}
+  
+
+for (lis in cusinelist){
+  for ( ind in lis){
+    cusinelist = checkcount(cusinelist,ind)
+  }
+}
+
+```
+
+
+
+
+
+
+
+
+```{r}
+countin = function(cuslist,ingreds){
+  value = 0
+  for ( in1 in ingreds){
+    if (in1 %in% cuslist){
+      value = value + 1
+    }
+    
+  }
+  return (value)
+}
+cookres =c()
+for (cookst in cooktest){
+  max = 0
+  res = ""
+  for(name in names(cusinelist)){
+    temp = countin(cusinelist[[name]],cookst$ingredients)
+    if( max < temp){
+      max = temp
+      res = name
+    }
+  }
+  cookres = c(cookres,res)
+ 
+}
+resultcook$cuisine = cookres
+
+fix(resultcook)
+```
+
+Here the Accuracy is very low as we see only support count ., which is not a best way to follow
+```{r}
+write.csv(resultcook, file = "Submisioncook.csv", row.names = FALSE)
+```
+```
+
+
+ 
+    
+  
+```{r}
+
+```
+
+
+
+
+
+
+
+
 

@@ -1,0 +1,45 @@
+---
+title: "Untitled"
+author: "Bhasheyam"
+date: "16 December 2017"
+output: html_document
+---
+
+```{r}
+c = c("a","b","c")
+l = list()
+for (cc in c){
+  l[[cc]] = c("new","toremove")
+}
+
+```
+
+```{r}
+l[["a"]][2] = "toremove"
+l[["a"]] =setdiff(l[["a"]], "new")
+l
+```
+
+```{r}
+d =c(3,4,5)
+datafr=as.data.frame(c(1,2,3))
+datafr$new = d
+fix(datafr)
+nt = t(datafr)
+fix(nt)
+```
+
+
+
+```{r}
+dfg = as.data.frame(test = c(1,2,3))
+for ( fg in cusinel){
+  dfg$
+  
+}
+```
+```{r}
+
+```
+
+

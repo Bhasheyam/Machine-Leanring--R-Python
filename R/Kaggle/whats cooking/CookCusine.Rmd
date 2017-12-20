@@ -28,7 +28,10 @@ resultcook = as.data.frame(id)
 Find all the Cusine in the list find the ingredients used in the cusine.
 ```{r}
 cusinel = c()
+alllist = c()
 for ( data1 in cookdata){
+      alllist = c(alllist,data1$cuisine)
+  
     if (data1$cuisine %in% cusinel){
       
     }
@@ -46,6 +49,9 @@ for ( data1 in cookdata){
 
 
 
+```{r}
+table(alllist)
+```
 
 ```{r}
 cusinel
@@ -108,16 +114,23 @@ for(cooks in cookdata){
 }
 traincook = as.data.frame(ingredientsall)
 fix(traincook)
+newt = t(traincook)
+fix(newt)
 ```
 
+
+
+
 ```{r}
+maxdoc = 18
+
 for (addin in cusinel){
+  
    countdoc = length(cusinelistrep[[addin]])
    temp =table(cusinelistrep[[addin]])
    templist = c()
    for (onein in ingredientsall){
- 
-
+     
   
   total = 0
   
@@ -151,42 +164,77 @@ for (addin in cusinel){
 
 
 
+```{r}
+n = length(cusinel)
+
+cusinelist1 =list()
+processlist = list()
+for (i in 1:n){
+ 
+  cusinelist1[[cusinel[i]]]=c()
+  processlist[[cusinel[i]]] =c()
+  
+}
+cusinelist1
 
 
+```
+
+
+```{r}
+for(cooks in cookdata){
+  for (ingredients in cooks$ingredients){
+    if (ingredients %in% cusinelist1[[cooks$cuisine]]){
+      
+    }
+    else{
+    
+      cusinelist1[[cooks$cuisine]] = c( cusinelist1[[cooks$cuisine]], ingredients)
+    }
+    
+  }
+  
+  
+}
+
+
+names(cusinelist1)
+```
 
 
 
 Remove data which are in almost more than 3 cusine
 ```{r}
-max = 3
-remove = function(list2, word){
-  for (lis1 in list2){
-    lis1 = setdiff(lis1,word)
-  }
-  return (list2)
-}
-checkcount = function(list1,word){
+length(cusinelist1[["russian"]])
+max = 14
+
+checkcount = function(word){
   temp = 0
-  for (lis1 in list1){
+  for (lis1 in cusinelist1){
     
     if ( word %in% lis1){
        temp = temp + 1
     }
     
   }
-  if (temp> max){
-    list1 =remove(cusinelist,word)
+  if (temp<= max){
+    return(TRUE)
   }
-  return (list1)
-}
-  
-
-for (lis in cusinelist){
-  for ( ind in lis){
-    cusinelist = checkcount(cusinelist,ind)
-  }
+  return (FALSE)
 }
 
+n = length(cusinel)
+
+for (ii in 1:n){
+  for ( ind in cusinelist1[[cusinel[ii]]]){
+     if(checkcount(ind)){
+      
+       processlist[[cusinel[ii]]] = c(processlist[[cusinel[ii]]],ind)
+     }
+  }
+}
+length(cusinelist1[["indian"]])
+length(processlist[["indian"]])
 ```
 
 
@@ -197,10 +245,10 @@ for (lis in cusinelist){
 
 
 ```{r}
-countin = function(cuslist,ingreds){
+countin = function(lis123,ingreds){
   value = 0
   for ( in1 in ingreds){
-    if (in1 %in% cuslist){
+    if (in1 %in% lis123){
       value = value + 1
     }
     
@@ -211,24 +259,34 @@ cookres =c()
 for (cookst in cooktest){
   max = 0
   res = ""
-  for(name in names(cusinelist)){
-    temp = countin(cusinelist[[name]],cookst$ingredients)
+  for(name in names(processlist)){
+    
+    temp = countin(processlist[[name]],cookst$ingredients)
     if( max < temp){
       max = temp
       res = name
     }
   }
-  cookres = c(cookres,res)
+  if (res == ""){
+    cookres = c(cookres,"japanese")
+  }
+  else{
+    cookres = c(cookres,res)
+    
+  }
+  
  
 }
 resultcook$cuisine = cookres
 
 fix(resultcook)
+
+table(cookres)
 ```
 
 Here the Accuracy is very low as we see only support count ., which is not a best way to follow
 ```{r}
-write.csv(resultcook, file = "Submisioncook.csv", row.names = FALSE)
+write.csv(resultcook, file = "Submisioncooklast.csv", row.names = FALSE)
 ```
 ```
 

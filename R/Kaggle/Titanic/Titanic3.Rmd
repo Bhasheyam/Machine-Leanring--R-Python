@@ -1,0 +1,205 @@
+---
+title: "Titanic random KMEANs, KNN"
+author: "Bhasheyam"
+date: "19 December 2017"
+output: html_document
+---
+
+```{r}
+Tittrain = read.csv("train.csv")
+Tittest = read.csv("test.csv")
+Tittest$Survived = ""
+```
+
+```{r}
+fix(Tittrain)
+```
+```{r}
+names(Tittest)
+```
+
+
+```{r}
+Tittrain$Sex = as.factor(Tittrain$Sex)
+Tittrain$Embarked = as.factor(Tittrain$Embarked)
+```
+
+```{r}
+Tittest$Sex = as.factor(Tittest$Sex)
+Tittest$Embarked = as.factor(Tittest$Embarked)
+```
+
+```{r}
+ageavg = mean(Tittrain$Age,na.rm=TRUE)
+ageavg1 = mean(Tittest$Age,na.rm=TRUE)
+ageavg
+```
+
+```{r}
+
+change = function(x){
+  if(is.na(x[6])){
+    x[6] = ageavg
+  }
+  else{
+    x[6] = x[6]
+  }
+}
+
+change1 = function(x){
+  if(is.na(x[5])){
+    x[5] = ageavg
+  }
+  else{
+    x[5] = x[5]
+  }
+}
+Tittrain$Age = apply(Tittrain, 1, change)
+Tittest$Age = apply(Tittest, 1, change1)
+```
+
+
+```{r}
+fix(Tittrain)
+```
+
+
+
+```{r}
+Tittrain$Age = as.numeric(Tittrain$Age)
+Tittest$Age = as.numeric(Tittest$Age)
+```
+
+```{r}
+Tittrain = subset(Tittrain, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch",      
+ "Embarked"   ))
+```
+
+```{r}
+Tittest = subset(Tittest, select = c( "Survived"  ,  "Pclass",  "Sex",  "Age", "SibSp",  "Parch", "Embarked"   ))
+```
+
+
+
+```{r}
+Tittrain$Survived = as.numeric(Tittrain$Survived)
+Tittrain$Survived = as.factor(Tittrain$Survived)
+```
+```{r}
+for(i in 1:ncol(Tittrain)){
+  Tittrain[is.na(Tittrain[,i]), i] <- mean(Tittrain[,i], na.rm = TRUE)
+}
+```
+```{r}
+fix(Tittrain)
+```
+
+```{r}
+for(i in 1:ncol(Tittest)){
+  Tittest[is.na(Tittest[,i]), i] <- mean(Tittest[,i], na.rm = TRUE)
+}
+```
+
+
+```{r}
+library(mlr)
+Ttask = makeClassifTask(data = Tittrain,target = "Survived" )
+Tetask = makeClassifTask(data = Tittest,target = "Survived")
+```
+
+```{r}
+set.seed(1)
+svmt = makeLearner("classif.ksvm", predict.type = "response")
+
+randomcross = makeResampleDesc("CV",iters = 2L)
+
+svmparameter<- makeParamSet(makeNumericParam("C", lower = -5, upper = 5, trafo = function(x) 2^x))
+
+
+svmcontrol = makeTuneControlGrid()
+svmtunel = tuneParams(svmt, task = Ttask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+```
+```{r}
+svmtunel$x
+```
+
+
+```{r}
+svmtunel$y
+```
+```{r}
+svmmodell = setHyperPars(svmt,par.vals = svmtunel$x)
+svmtrainl = train(svmmodell, Ttask)
+getLearnerModel(svmtrainl)
+
+```
+
+```{r}
+predictsvml = predict(svmtrainl, Tetask)
+```
+```{r}
+datacsv31 = as.data.frame(temptest$PassengerId)  
+datacsv31$Survived = logpridect$data$response
+```
+```{r}
+write.csv(datacsv31, file = "Submisionl.csv", row.names = FALSE)
+```
+```
+
+```{r}
+set.seed(1)
+svmlearner = makeLearner("classif.ksvm", predict.type = "response")
+
+randomcross = makeResampleDesc("CV",iters = 3L)
+
+svmparameter<- makeParamSet(makeNumericParam("C", lower = -5, upper = 5, trafo = function(x) 2^x),
+                            makeDiscreteParam("sigma", values = 2^c(-8,-4,0,4))) #RBF Kernel Parameter
+
+svmcontrol = makeTuneControlGrid()
+svmtune= tuneParams("classif.ksvm", task = traintask, resampling = randomcross, par.set  = svmparameter, control = svmcontrol, measures = acc)
+```
+
+
+
+```{r}
+svmtune$y
+```
+
+
+
+```{r}
+svmtune$x
+
+```
+
+
+
+
+```{r}
+svmmodel = setHyperPars(svmlearner,par.vals = svmtune$x)
+svmtrain = train(svmmodel, traintask)
+getLearnerModel(svmtrain)
+```
+
+
+```{r}
+predictsvm = predict(svmtrain, testtask)
+table (Autotest$high_mileage, predictsvm$data$response)
+```
+
+
+```{r}
+library(class)
+
+Train1 = Train[3:14]
+Test1 = Test[3:14]
+model=knn(train=Train1,test = Test1, cl=Train$countclass,k=10)
+summary(model)
+table(Test$countclass,model)
+```
+
+
+
+
+
+

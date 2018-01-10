@@ -37,6 +37,26 @@ table (model,iristestlabel)
 ```
 
 ```{r}
+library(ggplot2)
+library(magrittr)
+iristest %>%
+  ggplot(aes(x=Petal.Length, y=Petal.Width, color=iristestlabel)) +
+  geom_point()
+
+```
+
+
+```{r}
+iristest %>%
+  ggplot(aes(x=Petal.Length, y=Petal.Width, color= iristestlabel))  +stat_contour(data=df, aes(x, y, z = z), bins = 1) 
+  geom_point() 
+```
+
+
+
+
+
+```{r}
 library(caret)
 library(lattice)
 library(ggplot2)
